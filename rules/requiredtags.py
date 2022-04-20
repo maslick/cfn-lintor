@@ -3,17 +3,16 @@ from cfnlint.rules import RuleMatch
 
 
 class RequiredTags(CloudFormationLintRule):
-    """Check if Tags have required keys"""
+    """Check if Tags are present and have required keys"""
     id = 'E9000'
-    shortdesc = 'Tags have correct key values'
+    shortdesc = 'Check if Tags are present and have required keys'
     description = 'Check Tags for resources'
     tags = ['resources', 'tags']
 
     def match(self, cfn):
-        """Check Tags for required keys"""
+        """Check if Tags are present and have required keys"""
 
         matches = []
-
         required_tags = ['env']
 
         all_resources = cfn.search_deep_keys('Properties')
