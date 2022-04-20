@@ -1,0 +1,19 @@
+Description: >
+  Test
+
+Resources:
+  ECSCluster1:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: Helloworld1
+      Tags:
+        - Key: env
+          Value: production
+
+  ECSCluster2:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: Helloworld2
+      Tags:
+        - Key: env1
+          Value: production
