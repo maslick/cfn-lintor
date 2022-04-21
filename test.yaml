@@ -15,5 +15,11 @@ Resources:
     Properties:
       ClusterName: Helloworld2
       Tags:
-        - Key: env1
+        - Key: env
           Value: production
+
+  Policy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: String
+      PolicyDocument: {}

@@ -1,34 +1,45 @@
 from cfnlint.rules import CloudFormationLintRule
 from cfnlint.rules import RuleMatch
+from cfnlint.helpers import RESOURCE_SPECS
 
 
 class RequiredTags(CloudFormationLintRule):
-    """Check if Tags are present and have required keys"""
     id = 'E9000'
     shortdesc = 'Check if Tags are present and have required keys'
-    description = 'Check Tags for resources'
+    description = shortdesc
     tags = ['resources', 'tags']
-    required_tags = ['env']
+    tags_to_check = ['env']
 
     def match(self, cfn):
-        """Check if Tags are present and have required keys"""
+        """Check Tags for required keys"""
+        resource_types_with_tags = self.get_resource_types_with_tags(cfn.regions[0])
+        resources = cfn.get_resources()
 
         matches = []
+        for name, resource in resources.items():
+            resource_type = resource.get('Type', '')
+            if resource_type not in resource_types_with_tags:
+                continue
 
-        # Check if Tags property is set
-        all_resources = cfn.search_deep_keys('Properties')
-        for resource in all_resources:
-            if 'Tags' not in resource[-1]:
-                message = "One or more tags ({0}) are missing on the resource: {1}".format(', '.join(self.required_tags), resource[:-1][1])
-                matches.append(RuleMatch(resource, message))
+            resource_properties = resource.get('Properties', {})
+            tags = resource_properties.get('Tags', [])
+            tags_dict = {i.get('Key'): i.get('Value') for i in tags}
 
-        # Check if Required tags are defined
-        all_tags = [x for x in cfn.search_deep_keys('Tags') if x[0] == 'Resources']
-        for all_tag in all_tags:
-            all_keys = [d.get('Key') for d in all_tag[-1]]
-            for required_tag in self.required_tags:
-                if required_tag not in all_keys:
-                    message = "Tag '{0}' missing for resource '{1}'"
-                    matches.append(RuleMatch(all_tag[:-1], message.format(required_tag, all_tag[:-1][1])))
+            for tag in self.tags_to_check:
+                if tag not in tags_dict:
+                    matches.append(RuleMatch(
+                        ['Resources', name, 'Properties', 'Tags'],
+                        f'Missing tag "{tag}" for Resources/{name}',
+                    ))
 
         return matches
+
+    def get_resource_types_with_tags(self, region):
+        all_resource_types = RESOURCE_SPECS[region]['ResourceTypes']
+
+        resource_types = []
+        for resource_type, resource in all_resource_types.items():
+            properties = resource.get('Properties')
+            if properties and 'Tags' in properties:
+                resource_types.append(resource_type)
+        return resource_types
